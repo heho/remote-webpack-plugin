@@ -108,6 +108,8 @@ function setCache(ctx, cacheableRequest, cacheKey) {
   }
 }
 function loadHttp(config, callback, store) {
+  var tries = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
   var cacheableRequest = void 0;
   var request = void 0;
   if (store) {
@@ -140,8 +142,12 @@ function loadHttp(config, callback, store) {
     req.end();
   });
   incomeMsg.on('error', function (err) {
-    setCache(config, cacheableRequest, cacheKey);
-    handleStreamError(config, err, callback);
+    if (tries < 3) {
+      loadHttp(config, callback, store, tries + 1);
+    } else {
+      setCache(config, cacheableRequest, cacheKey);
+      handleStreamError(config, err, callback);
+    }
   });
 }
 

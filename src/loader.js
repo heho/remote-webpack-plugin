@@ -52,7 +52,7 @@ function setCache(ctx, cacheableRequest, cacheKey) {
     ctx.cacheKey = cacheKey;
   }
 }
-function loadHttp(config, callback, store) {
+function loadHttp(config, callback, store, tries = 0) {
   let cacheableRequest;
   let request;
   if (store) {
@@ -88,8 +88,12 @@ function loadHttp(config, callback, store) {
     req.end();
   });
   incomeMsg.on('error', (err) => {
-    setCache(config, cacheableRequest, cacheKey);
-    handleStreamError(config, err, callback);
+    if (tries < 3) {
+      loadHttp(config, callback, store, tries + 1);
+    } else {
+      setCache(config, cacheableRequest, cacheKey);
+      handleStreamError(config, err, callback);
+    }
   });
 }
 
